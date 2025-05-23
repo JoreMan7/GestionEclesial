@@ -1,129 +1,138 @@
-/* Inicio Parte Login */
-document.addEventListener('DOMContentLoaded', () => {
+/* ========== FUNCIONES COMPARTIDAS ========== */
+function setupBackButton(selector) {
+    const backButton = document.querySelector(selector);
+    if (backButton) {
+        backButton.addEventListener('click', () => window.history.back());
+    }
+}
+
+function setCurrentDate(elementId) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        const options = { day: 'numeric', month: 'short', year: 'numeric' };
+        element.textContent = new Date().toLocaleDateString('es-ES', options);
+    }
+}
+
+/* ========== INICIALIZACIÓN PRINCIPAL ========== */
+document.addEventListener('DOMContentLoaded', function() {
+    // Configuración común
+    setCurrentDate('CurrentDate');
+    setupBackButton('#btnVolver');
+    setupBackButton('#IconBack');
+
+    /* ===== LOGIN ===== */
     const loginForm = document.getElementById('LoginForm');
-    const errorMessage = document.getElementById('ErrorMessage');
-    const togglePassword = document.getElementById('TogglePassword');
-    const passwordInput = document.getElementById('Password');
+    if (loginForm) {
+        const errorMessage = document.getElementById('ErrorMessage');
+        const togglePassword = document.getElementById('TogglePassword');
+        const passwordInput = document.getElementById('Password');
 
-    loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const documentType = document.getElementById('DocumentType').value;
-        const documentNumber = document.getElementById('DocumentNumber').value;
-        const password = passwordInput.value;
-
-        if (!documentType || !documentNumber || !password) {
-            showError('Por favor, complete todos los campos.');
-            return;
-        }
-
-        try {
-            const response = await simulateApiCall(documentType, documentNumber, password);
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
             
-            if (response.success) {
-                hideError(); // Borra el mensaje si es necesario
-                window.location.href = '/Frontend/NavInicio.html'; // Redirige a la página de inicio
-            } else {
-                showError(response.message);
+            const documentType = document.getElementById('DocumentType').value;
+            const documentNumber = document.getElementById('DocumentNumber').value;
+            const password = passwordInput.value;
+
+            if (!documentType || !documentNumber || !password) {
+                errorMessage.textContent = 'Por favor, complete todos los campos.';
+                errorMessage.style.display = 'block';
+                return;
             }
-        } catch (error) {
-            showError('Error en el servidor. Por favor, intente más tarde.');
+
+            try {
+                const response = await simulateApiCall(documentType, documentNumber, password);
+                
+                if (response.success) {
+                    window.location.href = '/Frontend/NavInicio.html';
+                } else {
+                    errorMessage.textContent = response.message;
+                    errorMessage.style.display = 'block';
+                }
+            } catch (error) {
+                errorMessage.textContent = 'Error en el servidor. Por favor, intente más tarde.';
+                errorMessage.style.display = 'block';
+            }
+        });
+
+        if (togglePassword && passwordInput) {
+            togglePassword.addEventListener('click', function() {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                this.classList.toggle('show');
+            });
         }
-    });
 
-    togglePassword.addEventListener('click', function () {
-        const type = passwordInput.getAttribute('type') === 'Password' ? 'text' : 'password';
-        passwordInput.setAttribute('type', type);
-        this.classList.toggle('show');
-    });
-
-    function showError(message) {
-        errorMessage.textContent = message;
-        errorMessage.style.display = 'block'; // Asegúrate de mostrar el mensaje
-    }
-
-    function hideError() {
-        errorMessage.textContent = '';
-        errorMessage.style.display = 'none'; // Opcional: para ocultar el mensaje si es necesario
-    }
-
-    async function simulateApiCall(documentType, documentNumber, password) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        const validCredentials = {
-            cc: { number: '12345678', password: 'iglesia2024' },
-            ce: { number: '87654321', password: 'extranjero2024' },
-            pa: { number: 'AB123456', password: 'pasaporte2024' },
-            pep: { number: 'PEP78901', password: 'permiso2024' }
-        };
-
-        const userCredentials = validCredentials[documentType];
-
-        if (userCredentials && 
-            userCredentials.number === documentNumber && 
-            userCredentials.password === password) {
-            return { success: true };
-        } else {
-            return { 
-                success: false, 
-                message: 'Tipo de documento, número de documento o contraseña incorrectos' 
+        async function simulateApiCall(documentType, documentNumber, password) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            const validCredentials = {
+                cc: { number: '12345678', password: 'iglesia2024' },
+                ce: { number: '87654321', password: 'extranjero2024' },
+                pa: { number: 'AB123456', password: 'pasaporte2024' },
+                pep: { number: 'PEP78901', password: 'permiso2024' }
             };
+
+            const userCredentials = validCredentials[documentType];
+            return userCredentials?.number === documentNumber && userCredentials?.password === password
+                ? { success: true }
+                : { success: false, message: 'Credenciales incorrectas' };
         }
     }
-});
-/*Fin Parte Login */
-/*Botón Volver*/
-document.addEventListener("DOMContentLoaded", function() {
-    const botonVolver = document.getElementById("btnVolver");
 
-    if (botonVolver) {
-        botonVolver.addEventListener("click", function() {
-            history.back(); // Volver a la página anterior
+    /* ===== DASHBOARD ===== */
+    // Tarjetas clickeables
+    document.querySelectorAll(".DashboardCard:not(.Disabled)").forEach(card => {
+        card.style.cursor = "pointer";
+        card.addEventListener("click", function() {
+            const url = this.getAttribute("data-url");
+            if (url) window.location.href = url;
+        });
+    });
+
+    // Botones de ayuda y logout
+    document.querySelector('.BtnLogout')?.addEventListener('click', () => {
+        window.location.href = '/Frontend/index.html';
+    });
+
+    document.querySelector('.BtnHelp')?.addEventListener('click', () => {
+        alert('Sistema de Ayuda\n\nPara más información, contacte al administrador.');
+    });
+
+    /* ===== FILTROS Y TABLAS (SECUNDARIO) ===== */
+    // Solo se ejecuta si existe el contenedor de filtros
+    if (document.getElementById('FilterButton')) {
+        // [Todo el código de filtros y datepicker del secundario]
+        // Filter dropdown toggle
+        const filterButton = document.getElementById('FilterButton');
+        const filterMenu = document.getElementById('FilterMenu');
+
+        filterButton.addEventListener('click', function(e) {
+            e.stopPropagation();
+            filterMenu.classList.toggle('show');
+        });
+
+        document.addEventListener('click', function() {
+            filterMenu.classList.remove('show');
+        });
+
+        filterMenu.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+
+        // Date picker functionality
+        const startDateInput = document.getElementById('StartDate');
+        const endDateInput = document.getElementById('EndDate');
+        
+        if (startDateInput && endDateInput) {
+            // [Resto del código del datepicker...]
+        }
+
+        // Select all checkbox
+        document.getElementById('SelectAll')?.addEventListener('change', function() {
+            document.querySelectorAll('tbody input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
         });
     }
 });
-/*Fin Botón Volver*/
-/*Funciones ayuda y logout */
-document.addEventListener('DOMContentLoaded', function() {
-    // Set current date
-    const currentDateElement = document.getElementById('CurrentDate');
-    const currentDate = new Date();
-    const options = { 
-        day: 'numeric', 
-        month: 'short', 
-        year: 'numeric'
-    };
-    currentDateElement.textContent = currentDate.toLocaleDateString('es-ES', options);
-
-    // Add click event for logout button
-    const logoutButton = document.querySelector('.BtnLogout');
-    logoutButton.addEventListener('click', function() {
-        // Add logout logic here
-        window.location.href = '/Frontend/index.html'; // Redirect to login page
-    });
-
-    // Add click event for help button
-    const helpButton = document.querySelector('.BtnHelp');
-    helpButton.addEventListener('click', function() {
-        alert('Sistema de Ayuda\n\nPara más información, contacte al administrador.');
-    })
-});
-
-/*Inicio Clicks Sobre Tarjetas*/
-document.addEventListener("DOMContentLoaded", function () {
-    const tarjetas = document.querySelectorAll(".DashboardCard");
-
-    tarjetas.forEach(card => {
-        // Evita que las tarjetas deshabilitadas se comporten como enlaces
-        if (!card.classList.contains("Disabled")) {
-            card.style.cursor = "pointer"; // Opcional: estilo visual
-
-            card.addEventListener("click", function () {
-                const url = card.getAttribute("data-url");
-                if (url) {
-                    window.location.href = url;
-                }
-            });
-        }
-    });
-});
-/*Fin Clicks Sobre Tarjetas*/
